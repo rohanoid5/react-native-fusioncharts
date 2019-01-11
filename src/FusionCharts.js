@@ -109,10 +109,32 @@ export default class FusionCharts extends Component {
   }
 
   isSameChartData(currData, oldData) {
-    if (utils.isObject(currData) && utils.isObject(oldData)) {
-      return utils.isSameObjectContent(currData, oldData);
+    if (
+      utils.checkIfDataTableExists(currData) &&
+      !utils.checkIfDataTableExists(oldData)
+    ) {
+      return false;
     }
-    return currData === oldData;
+    if (
+      !utils.checkIfDataTableExists(currData) &&
+      utils.checkIfDataTableExists(oldData)
+    ) {
+      return false;
+    }
+    if (
+      utils.checkIfDataTableExists(currData) &&
+      utils.checkIfDataTableExists(oldData) &&
+      currData.data !== oldData.data
+    ) {
+      return false;
+    }
+    const oldDataStringified = JSON.stringify(
+      utils.cloneDataSource(oldData, 'diff')
+    );
+    const currentDataStringified = JSON.stringify(
+      utils.cloneDataSource(currData, 'diff')
+    );
+    return oldDataStringified === currentDataStringified;
   }
 
   checkAndUpdateEvents(currentOptions, oldOptions) {
@@ -200,8 +222,19 @@ export default class FusionCharts extends Component {
     }, {});
     Object.assign(inlineOptions, chartConfig);
 
-    if (utils.isObject(inlineOptions.dataSource)) {
+    if (
+      utils.isObject(inlineOptions.dataSource) &&
+      !utils.checkIfDataTableExists(inlineOptions.dataSource)
+    ) {
       inlineOptions.dataSource = utils.deepCopyOf(inlineOptions.dataSource);
+    } else if (
+      utils.isObject(inlineOptions.dataSource) &&
+      utils.checkIfDataTableExists(inlineOptions.dataSource)
+    ) {
+      inlineOptions.dataSource = utils.cloneDataSource(
+        inlineOptions.dataSource,
+        'clone'
+      );
     }
     if (utils.isObject(inlineOptions.link)) {
       inlineOptions.link = utils.deepCopyOf(inlineOptions.link);
